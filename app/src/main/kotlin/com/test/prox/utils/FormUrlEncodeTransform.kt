@@ -30,7 +30,7 @@ class FormUrlEncodeTransform : StringFormat {
     @OptIn(ExperimentalSerializationApi::class)
     override fun <T> decodeFromString(deserializer: DeserializationStrategy<T>, string: String): T {
         val params = parseQueryString(string)
-        var tmp = mutableListOf<String>()
+        val tmp = mutableListOf<String>()
         params.forEach { s, _ ->
             tmp.add("\"$s\":\"${params[s]}\"")
         }
