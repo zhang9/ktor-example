@@ -8,6 +8,7 @@ import com.test.prox.features.CustomLocations
 import com.test.prox.features.coersdk.CoreSdk
 import com.test.prox.features.getRequiredRole
 import com.test.prox.routes.configureRouting
+import com.test.prox.utils.formUrlEncoded
 import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.request.*
@@ -23,8 +24,6 @@ import org.slf4j.event.Level
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
 
-
-
 @Suppress("unused")
 @kotlin.jvm.JvmOverloads
 fun Application.main(testing: Boolean = false) {
@@ -35,6 +34,7 @@ fun Application.main(testing: Boolean = false) {
     }
     install(ContentNegotiation) {
         json()
+        formUrlEncoded()
     }
     install(CustomLocations)
     install(CoreSdk)
@@ -45,10 +45,10 @@ fun Application.main(testing: Boolean = false) {
 
     environment.monitor.subscribe(RoutingCallStarted) { call ->
         val role = call.route.getRequiredRole()
-        GlobalScope.launch {
-            val tmp = call.request.receiveChannel().readRemaining().readText(Charsets.UTF_8)
-            println("receive parameters ====== $tmp ")
-        }
+//        GlobalScope.launch {
+//            val tmp = call.request.receiveChannel().readRemaining().readText(Charsets.UTF_8)
+//            println("receive parameters ====== $tmp ")
+//        }
         println("receive required role ====== $role ")
     }
 }
