@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
+
     id("org.jetbrains.kotlin.jvm")
     // Apply the application plugin to add support for building a CLI application in Java.
     application
@@ -33,6 +34,11 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 
     implementation("ch.qos.logback:logback-classic:1.2.3")
+
+    implementation("org.jetbrains.exposed:exposed-core:0.32.1")
+    implementation("org.jetbrains.exposed:exposed-dao:0.32.1")
+    implementation("org.jetbrains.exposed:exposed-jdbc:0.32.1")
+
     implementation("org.ktorm", "ktorm-core", "3.4.1")
     implementation("org.ktorm", "ktorm-support-mysql", "3.4.1")
     implementation("mysql", "mysql-connector-java", "8.0.25")

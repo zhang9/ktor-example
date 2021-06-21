@@ -6,18 +6,19 @@ package com.test.prox
 import com.test.prox.database.connectDatabase
 import com.test.prox.features.CustomLocations
 import com.test.prox.features.coersdk.CoreSdk
+import com.test.prox.features.coersdk.CoreSdkPrincipal
 import com.test.prox.features.getRequiredRole
 import com.test.prox.routes.configureRouting
 import com.test.prox.utils.formUrlEncoded
 import io.ktor.application.*
+import io.ktor.auth.*
 import io.ktor.features.*
+import io.ktor.http.*
 import io.ktor.request.*
+import io.ktor.response.*
+import io.ktor.routing.*
 import io.ktor.routing.Routing.Feature.RoutingCallStarted
 import io.ktor.serialization.*
-import io.ktor.utils.io.*
-import io.ktor.utils.io.core.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import org.slf4j.event.Level
 
 
@@ -28,6 +29,13 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 @kotlin.jvm.JvmOverloads
 fun Application.main(testing: Boolean = false) {
     connectDatabase()
+    install(DoubleReceive)
+    install(StatusPages) {
+        exception<Throwable> { cause ->
+            println("exception cause ${cause.message}")
+            call.respond(HttpStatusCode.InternalServerError,  mapOf("code" to "500", "msg" to cause.message))
+        }
+    }
     install(CallLogging) {
         level = Level.INFO
         filter { call -> call.request.path().startsWith("/") }
@@ -41,15 +49,19 @@ fun Application.main(testing: Boolean = false) {
 
     configureRouting()
 
-//    receivePipeline.intercept()
 
-    environment.monitor.subscribe(RoutingCallStarted) { call ->
-        val role = call.route.getRequiredRole()
-//        GlobalScope.launch {
-//            val tmp = call.request.receiveChannel().readRemaining().readText(Charsets.UTF_8)
-//            println("receive parameters ====== $tmp ")
-//        }
-        println("receive required role ====== $role ")
-    }
 }
 
+@Suppress("unused")
+@kotlin.jvm.JvmOverloads
+fun Application.module() {
+    environment.monitor.subscribe(RoutingCallStarted) { it ->
+        val tmp = it.principal<CoreSdkPrincipal>()
+        println("CoreSdkPrincipal ===== $tmp")
+        routing {
+            trace {
+                log.trace(it.buildText())
+            }
+        }
+    }
+}

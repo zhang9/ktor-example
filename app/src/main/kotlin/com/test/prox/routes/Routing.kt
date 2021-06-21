@@ -2,9 +2,7 @@ package com.test.prox.routes
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.test.prox.database.database
-import com.test.prox.database.usersRepo
-import com.test.prox.entities.User
+import com.test.prox.database.User
 import com.test.prox.features.coersdk.CoreSdkPrincipal
 import com.test.prox.features.route
 import io.ktor.application.*
@@ -12,8 +10,7 @@ import io.ktor.auth.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import org.ktorm.dsl.eq
-import org.ktorm.entity.*
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
 fun Application.configureRouting() {
@@ -36,28 +33,40 @@ fun Application.configureRouting() {
             route<GetUserRoute> { params ->
                 val p = call.principal<CoreSdkPrincipal>()
                 println("call get user route success and receive roles = ${p?.roles}")
-                requireNotNull(call.parameters["name"]) {
-                    "name cannot be empty"
-                }
 
                 val uid = params.id
-                val db = call.application.database
-                val user = db.usersRepo.find { it.uid eq uid }
-                call.respondText(user.toString())
+                val user = transaction {
+                    User.findById(UUID.fromString(uid))
+                }
+                user?.let {
+                    call.respond(it.getResponse())
+                }
             }
         }
 
         route<CreateUserParams> {
             val params = call.receive<CreateUserParams>()
             println("CreateUserParams====${CreateUserParams}")
-            val db = call.application.database
-            val user = User {
-                uid = UUID.randomUUID().toString()
-                name = params.name
-                email = params.email
+            val user = transaction {
+                User.new {
+                    name = params.name
+                    email = params.email
+                }
             }
-            db.usersRepo.add(user)
-            call.respond(mapOf("uid" to user.uid, "name" to user.name, "email" to user.email))
+            call.respond(user.getResponse())
+        }
+
+        route<UpdateUserParams> {
+            val params = call.receive<UpdateUserParams>()
+            println("UpdateUserParams====${CreateUserParams}")
+            val uid = params.id
+            transaction {
+                User.findById(UUID.fromString(uid))?.also {
+                    it.email = params.email
+                }
+            }?.let {
+                call.respond(it.getResponse())
+            }
         }
     }
 }
