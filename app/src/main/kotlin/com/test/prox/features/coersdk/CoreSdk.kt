@@ -10,7 +10,6 @@ class CoreSdk(val application: Application, val configuration: Configuration){
         configureSecurity()
     }
     class Configuration(config: ApplicationConfig) {
-        val a = config.run {  }
         val appId = config.property("appId").getString()
         val appSecret = config.property("appSecret").getString()
     }
@@ -21,7 +20,9 @@ class CoreSdk(val application: Application, val configuration: Configuration){
         // Code to execute when installing the plugin.
         override fun install(pipeline: Application, configure: Configuration.() -> Unit):  CoreSdk {
             val config = pipeline.environment.config.config("coreSdk")
+            println("coresdk config ====== $config")
             val configuration = Configuration(config).apply(configure)
+            println("appsecret ====== ${configuration.appSecret}")
             return CoreSdk(pipeline, configuration)
         }
     }
