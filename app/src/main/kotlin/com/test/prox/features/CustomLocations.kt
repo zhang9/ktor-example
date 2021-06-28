@@ -1,12 +1,23 @@
 package com.test.prox.features
 
+import com.google.gson.Gson
+import freemarker.cache.ClassTemplateLoader
 import io.ktor.application.*
 import io.ktor.features.*
+import io.ktor.freemarker.*
 import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.routing.*
+import io.ktor.serialization.*
 import io.ktor.util.*
 import io.ktor.util.pipeline.*
+import io.ktor.webjars.*
+import io.swagger.v3.oas.models.OpenAPI
+import io.swagger.v3.oas.models.Operation
+import io.swagger.v3.oas.models.PathItem
+import io.swagger.v3.oas.models.Paths
+import io.swagger.v3.oas.models.info.Info
+import io.swagger.v3.oas.models.servers.Server
 import java.lang.reflect.Type
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KClass
@@ -35,6 +46,7 @@ data class ExtendLocationInfo(
     val parameters: List<ExtendLocationPropertyInfo>,
 )
 
+
 open class CustomLocations(private val application: Application, configuration: Configuration) {
     private val roles = configuration.roleHashMap // Copies a snapshot of the mutable config into an immutable property.
 
@@ -54,6 +66,42 @@ open class CustomLocations(private val application: Application, configuration: 
         route.children.forEach {
             setRequiredRoleToAll(it, role)
         }
+    }
+
+    private fun getOAS3Config(): String? {
+        val opi = OpenAPI()
+        val info = Info()
+        val server = Server()
+        server.url = "https://localhost:8080/api"
+        info.title = "test"
+        opi.info = info
+        opi.servers = listOf(server)
+        opi.paths = Paths()
+
+        val pathItem = PathItem()
+        val opr = Operation()
+        pathItem.get = opr
+
+        opi.paths.addPathItem("/user", pathItem)
+        return Gson().toJson(opi)
+    }
+
+    private fun supportSwagger() {
+        application.install(Webjars)
+        application.install(FreeMarker) {
+            templateLoader = ClassTemplateLoader(this::class.java.classLoader, "templates")
+        }
+        application.routing {
+            get("/webapis") {
+                val conf = getOAS3Config()
+                print("openapi conf is $conf")
+                call.respondTemplate("swagger-ui.ftl", mapOf("spec" to conf))
+            }
+        }
+    }
+
+    init {
+        supportSwagger()
     }
 
     fun getLocationInfo(locationClass: KClass<*>): ExtendLocationInfo {

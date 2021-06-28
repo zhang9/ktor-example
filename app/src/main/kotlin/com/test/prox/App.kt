@@ -7,7 +7,6 @@ import com.test.prox.database.connectDatabase
 import com.test.prox.features.CustomLocations
 import com.test.prox.features.coersdk.CoreSdk
 import com.test.prox.features.coersdk.CoreSdkPrincipal
-import com.test.prox.features.getRequiredRole
 import com.test.prox.routes.configureRouting
 import com.test.prox.utils.formUrlEncoded
 import io.ktor.application.*
@@ -29,11 +28,12 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 @kotlin.jvm.JvmOverloads
 fun Application.main(testing: Boolean = false) {
     connectDatabase()
+
     install(DoubleReceive)
     install(StatusPages) {
         exception<Throwable> { cause ->
             println("exception cause ${cause.message}")
-            call.respond(HttpStatusCode.InternalServerError,  mapOf("code" to "500", "msg" to cause.message))
+            call.respond(HttpStatusCode.InternalServerError, mapOf("code" to "500", "msg" to cause.message))
         }
     }
     install(CallLogging) {
@@ -49,7 +49,6 @@ fun Application.main(testing: Boolean = false) {
 
     configureRouting()
 
-
 }
 
 @Suppress("unused")
@@ -58,6 +57,7 @@ fun Application.module() {
     environment.monitor.subscribe(RoutingCallStarted) { it ->
         val tmp = it.principal<CoreSdkPrincipal>()
         println("CoreSdkPrincipal ===== $tmp")
+
         routing {
             trace {
                 log.trace(it.buildText())
